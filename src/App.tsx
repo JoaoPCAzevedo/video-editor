@@ -28,6 +28,7 @@ export default function App() {
     height: 0,
   });
   const [video, setVideo] = useState<File | undefined>();
+  const [currentFrame, setCurrentFrame] = useState<number>(0);
   const [transcript, setTranscript] = useState<TranscriptProps>();
   const ffmpegRef = useRef(new FFmpeg());
 
@@ -162,33 +163,35 @@ export default function App() {
         <div className="flex p-8 gap-4">
           <div
             className={`${
-              !frames && !video && "animate-pulse bg-muted"
-            } h-fit w-8/12`}
+              frames.length === 0 && "animate-pulse bg-muted"
+            } h-fit min-h-96 w-8/12 rounded-lg border flex flex-wrap justify-center`}
           >
-            <video className="w-full">
-              <source
-                src="https://placehold.co/1920x1080.mp4"
-                type="video/mp4"
-              />
-              <source
-                src="https://placehold.co/1920x1080.ogg"
-                type="video/ogg"
-              />
-              Your browser does not support HTML video.
-            </video>
-            <div className="flex gap-1 overflow-auto relative w-full float-left">
-              <Timeline framesCount={frames.length} frameSize={frameSize} />
-              {frames.map((frame, index) => (
+            {frames.length > 0 && (
+              <>
                 <img
-                  alt={`frame-${index}`}
-                  key={index}
-                  src={frame}
-                  loading="lazy"
-                  draggable={false}
-                  className="h-20 w-auto"
+                  alt={`frame-${currentFrame}`}
+                  src={frames[currentFrame]}
+                  className="max-h-screen w-auto"
                 />
-              ))}
-            </div>
+                <div className="flex gap-1 overflow-auto relative w-full float-left">
+                  <Timeline
+                    framesCount={frames.length}
+                    frameSize={frameSize}
+                    setCurrentFrame={setCurrentFrame}
+                  />
+                  {frames.map((frame, index) => (
+                    <img
+                      alt={`frame-${index}`}
+                      key={index}
+                      src={frame}
+                      loading="lazy"
+                      draggable={false}
+                      className="h-20 w-auto"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           <div id="right-panel" className="w-4/12">
             {transcript && <SidePanel transcript={transcript} />}

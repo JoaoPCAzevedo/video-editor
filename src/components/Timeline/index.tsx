@@ -8,41 +8,45 @@ export type FrameSize = {
 interface TimelineProps {
   framesCount: number;
   frameSize: FrameSize;
+  setCurrentFrame: (frame: number) => void;
 }
 
-const MIN: number = 0;
-
 export function Timeline(props: TimelineProps): JSX.Element {
-  const { framesCount, frameSize } = props;
+  const { framesCount, frameSize, setCurrentFrame } = props;
   const adjustedWidth = (frameSize.width * 80) / frameSize.height;
   const timelineWidth = `calc(${adjustedWidth}*${framesCount}px + 0.25rem*${
     framesCount - 1
   })`;
+  const min: number = 0;
+  const max: number = framesCount - 1;
 
   return (
     <>
       <Thumb
-        defaultValue={[MIN, 19]}
-        min={MIN}
-        max={framesCount}
+        defaultValue={[min, max]}
+        min={min}
+        max={max}
         step={1}
         className="absolute top-0 bottom-0 w-full"
         style={{
           width: timelineWidth,
         }}
-        onMouseLeave={(e) => {
-          console.log(e.target);
+        onValueChange={(value) => {
+          console.log(value);
         }}
       />
       <Thumb
         isCurrent
-        defaultValue={[1]}
-        min={MIN}
-        max={framesCount}
+        defaultValue={[0]}
+        min={min}
+        max={max}
         step={1}
         className="absolute top-0 bottom-0 w-full"
         style={{
           width: timelineWidth,
+        }}
+        onValueChange={(value) => {
+          setCurrentFrame(value[0]);
         }}
       />
     </>
