@@ -1,44 +1,31 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-export default function Transcript() {
+type TranscriptItem = {
+  timeStamp: string;
+  text: string;
+};
+
+export interface TranscriptProps {
+  transcript: TranscriptItem[];
+}
+
+export default function Transcript(props: TranscriptProps): JSX.Element {
+  const { transcript } = props;
   return (
-    <Card>
+    <Card className="max-h-[90vh] overflow-auto">
       <CardHeader>
         <Input id="search" placeholder="🔍 Search" />
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center">
-          <span className="rounded-full bg-teal-500 text-white size-8 inline-flex items-center justify-center mr-2">
-            KR
-          </span>
-          <span className="font-semibold text-base mr-2">Katie Rowe</span>
-          <span className="text-muted-foreground">00:01</span>
-        </div>
-        <p className="mt-2">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent
-          euismod, nunc nec consectetur tincidunt, nisl lacus tempor urna, quis
-          ullamcorper risus quam quis nisi. Donec sit amet nunc condimentum,
-          lacinia nunc id, tempor nisi. Donec sit amet nunc condimentum, lacinia
-          nunc id, tempor nisi.
-        </p>
-      </CardContent>
-      <CardContent>
-        <div className="flex items-center">
-          <span className="rounded-full bg-teal-500 text-white size-8 inline-flex items-center justify-center mr-2">
-            KR
-          </span>
-          <span className="font-semibold text-base mr-2">Katie Rowe</span>
-          <span className="text-muted-foreground">00:01</span>
-        </div>
-        <p className="mt-2">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent
-          euismod, nunc nec consectetur tincidunt, nisl lacus tempor urna, quis
-          ullamcorper risus quam quis nisi. Donec sit amet nunc condimentum,
-          lacinia nunc id, tempor nisi. Donec sit amet nunc condimentum, lacinia
-          nunc id, tempor nisi.
-        </p>
-      </CardContent>
+      {transcript.map((item) => (
+        <CardContent key={item.timeStamp}>
+          <div className="flex items-center">
+            <span className="text-muted-foreground">{item.timeStamp}</span>
+            <span className="ml-4 text-xs">❌</span>
+          </div>
+          <p className="mt-2">{item.text}</p>
+        </CardContent>
+      ))}
     </Card>
   );
 }

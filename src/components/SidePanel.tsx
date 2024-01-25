@@ -6,9 +6,17 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import Transcript from "@/components/Transcript";
+import Transcript, { type TranscriptProps } from "@/components/Transcript";
 
-export default function SidePanel() {
+interface SidePanelProps {
+  transcript: TranscriptProps;
+}
+
+export default function SidePanel(props: SidePanelProps): JSX.Element {
+  const {
+    transcript: { transcript },
+  } = props;
+
   return (
     <Tabs defaultValue="transcript" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
@@ -20,7 +28,7 @@ export default function SidePanel() {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="transcript">
-        <Transcript />
+        <Transcript transcript={transcript} />
       </TabsContent>
       <TabsContent value="summary">
         <Card>

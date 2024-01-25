@@ -1,36 +1,48 @@
 import { Thumb } from "@/components/Timeline/Thumb";
 
+export type FrameSize = {
+  width: number;
+  height: number;
+};
+
 interface TimelineProps {
-  frames: number;
+  framesCount: number;
+  frameSize: FrameSize;
 }
 
 const MIN: number = 0;
-const MAX: number = 100;
 
 export function Timeline(props: TimelineProps): JSX.Element {
-  const { frames } = props;
+  const { framesCount, frameSize } = props;
+  const adjustedWidth = (frameSize.width * 80) / frameSize.height;
+  const timelineWidth = `calc(${adjustedWidth}*${framesCount}px + 0.25rem*${
+    framesCount - 1
+  })`;
 
   return (
     <>
       <Thumb
-        defaultValue={[MIN, MAX]}
+        defaultValue={[MIN, 19]}
         min={MIN}
-        max={MAX}
+        max={framesCount}
         step={1}
         className="absolute top-0 bottom-0 w-full"
         style={{
-          width: `calc(100px*${frames} + 0.25rem*${frames - 1})`,
+          width: timelineWidth,
+        }}
+        onMouseLeave={(e) => {
+          console.log(e.target);
         }}
       />
       <Thumb
         isCurrent
-        defaultValue={[20]}
+        defaultValue={[1]}
         min={MIN}
-        max={MAX}
+        max={framesCount}
         step={1}
         className="absolute top-0 bottom-0 w-full"
         style={{
-          width: `calc(100px*${frames} + 0.25rem*${frames - 1})`,
+          width: timelineWidth,
         }}
       />
     </>

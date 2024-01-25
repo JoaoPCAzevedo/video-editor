@@ -10,8 +10,8 @@ const Thumb = React.forwardRef<
   }
 >(({ className, isCurrent, ...props }, ref) => {
   const styling = !isCurrent
-    ? { thumb: "bg-yellow-500", shadow: "0 0 0 100vw rgba(0, 0, 0, 0.8)" }
-    : { thumb: "bg-purple-500", shadow: "none" };
+    ? { thumb: "bg-yellow-500 w-2", shadow: "0 0 0 100vw rgba(0, 0, 0, 0.8)" }
+    : { thumb: "bg-purple-500 w-1", shadow: "none" };
 
   return (
     <SliderPrimitive.Root
@@ -32,7 +32,7 @@ const Thumb = React.forwardRef<
       {props?.defaultValue?.map((value) => (
         <SliderPrimitive.Thumb
           key={`thumb-${value}`}
-          className={`block h-[67px] w-1 rounded-lg disabled:pointer-events-none pointer-events-auto disabled:opacity-50 ${styling.thumb}`}
+          className={`block h-20 rounded-lg disabled:pointer-events-none pointer-events-auto disabled:opacity-50 ${styling.thumb}`}
         />
       ))}
     </SliderPrimitive.Root>
