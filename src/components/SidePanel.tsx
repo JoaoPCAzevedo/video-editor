@@ -9,12 +9,14 @@ import {
 import Transcript, { type TranscriptProps } from "@/components/Transcript";
 
 interface SidePanelProps {
-  transcript: TranscriptProps;
+  transcript: Pick<TranscriptProps, "transcript">;
+  removeTranscript: (item: number) => void;
 }
 
 export default function SidePanel(props: SidePanelProps): JSX.Element {
   const {
     transcript: { transcript },
+    removeTranscript,
   } = props;
 
   return (
@@ -28,7 +30,10 @@ export default function SidePanel(props: SidePanelProps): JSX.Element {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="transcript">
-        <Transcript transcript={transcript} />
+        <Transcript
+          transcript={transcript}
+          removeTranscript={removeTranscript}
+        />
       </TabsContent>
       <TabsContent value="summary">
         <Card>

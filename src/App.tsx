@@ -110,10 +110,39 @@ export default function App() {
     }
   }
 
+  function removeTranscript(item: number) {
+    const copyTranscript = { ...(transcript as TranscriptProps) };
+    if (copyTranscript?.transcript) {
+      // Update future items time
+      const duration =
+        copyTranscript.transcript[item].time.end -
+        copyTranscript.transcript[item].time.start;
+      for (let i = item; i < copyTranscript.transcript.length; i++) {
+        copyTranscript.transcript[i].time.start =
+          copyTranscript.transcript[i].time.start - duration;
+        copyTranscript.transcript[i].time.end =
+          copyTranscript.transcript[i].time.end - duration;
+      }
+      // Remove item from transcript
+      const updatedTranscript = copyTranscript.transcript.filter(
+        (_, i) => i !== item
+      );
+      // Update transcript state
+      copyTranscript.transcript = updatedTranscript;
+      setTranscript(copyTranscript as TranscriptProps);
+      // Remove corresponding frames
+      const copyFrames = [...frames];
+      copyFrames.splice(item, duration);
+      setFrames(copyFrames);
+      setCurrentFrame(0);
+    }
+  }
+
   useEffect(() => {
     load();
   }, []);
 
+  console.log(transcript);
   return (
     <>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -194,7 +223,12 @@ export default function App() {
             )}
           </div>
           <div id="right-panel" className="w-4/12">
-            {transcript && <SidePanel transcript={transcript} />}
+            {transcript && (
+              <SidePanel
+                transcript={transcript}
+                removeTranscript={removeTranscript}
+              />
+            )}
           </div>
         </div>
       </ThemeProvider>
