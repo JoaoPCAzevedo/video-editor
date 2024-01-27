@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { type TranscriptProps } from "@/components/Transcript";
 import ActionBar from "@/components/ActionBar";
+import { convertSecondsToClock } from "@/lib/utils";
 
 const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/ogg"];
 const ACCEPTED_TRANSCRIPT_TYPES = ["application/json"];
@@ -87,6 +88,42 @@ export default function App() {
     setStartEnd([0, frames.length - 1]);
   };
 
+  const trimVideo = async () => {
+    const ffmpeg = ffmpegRef.current;
+    await ffmpeg.writeFile("input.mp4", await fetchFile(video));
+    await ffmpeg.exec([
+      "-i",
+      "input.mp4",
+      "-ss",
+      convertSecondsToClock(startEnd[0]),
+      "-to",
+      convertSecondsToClock(startEnd[1] + 1),
+      "-c",
+      "copy",
+      "output.mp4",
+    ]);
+    // Read the data of the output file and create a blob URL
+    const data = (await ffmpeg.readFile("output.mp4")) as Uint8Array;
+    const trimmedVideoUrl = URL.createObjectURL(
+      new Blob([data.buffer], { type: "video/mp4" })
+    );
+    return trimmedVideoUrl;
+  };
+
+  const exportVideo = async () => {
+    // Call the trimVideo function and get the URL
+    const url = await trimVideo();
+    // Create an anchor element and set the href and download attributes
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "video.mp4";
+    // Append the anchor to the document body and click it
+    document.body.appendChild(a);
+    a.click();
+    // Remove the anchor from the document
+    document.body.removeChild(a);
+  };
+
   function onSubmitVideo(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     splitIntoFrames();
@@ -145,7 +182,6 @@ export default function App() {
     load();
   }, []);
 
-  console.log(startEnd);
   return (
     <>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -205,7 +241,11 @@ export default function App() {
                   src={frames[currentFrame]}
                   className="max-h-screen w-auto"
                 />
-                <ActionBar startEnd={startEnd} currentFrame={currentFrame} />
+                <ActionBar
+                  startEnd={startEnd}
+                  currentFrame={currentFrame}
+                  exportVideo={exportVideo}
+                />
                 <div className="flex overflow-auto relative w-full float-left">
                   <Timeline
                     framesCount={frames.length}
