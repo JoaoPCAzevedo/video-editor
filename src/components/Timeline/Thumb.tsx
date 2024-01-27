@@ -7,11 +7,14 @@ const Thumb = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> & {
     isCurrent?: boolean;
+    adjustedWidth: number;
   }
->(({ className, isCurrent, ...props }, ref) => {
+>(({ className, isCurrent, adjustedWidth, ...props }, ref) => {
   const styling = !isCurrent
-    ? { thumb: "bg-yellow-500 w-2", shadow: "0 0 0 100vw rgba(0, 0, 0, 0.8)" }
-    : { thumb: "bg-purple-500 w-1", shadow: "none" };
+    ? {
+        thumb: "border-2 border-primary",
+      }
+    : { thumb: "bg-transparent", shadow: "none" };
 
   return (
     <SliderPrimitive.Root
@@ -24,16 +27,20 @@ const Thumb = React.forwardRef<
       {...props}
     >
       <SliderPrimitive.Track className="relative h-full w-full grow overflow-hidden">
-        <SliderPrimitive.Range
-          className="absolute h-full"
-          style={{ boxShadow: styling.shadow }}
-        />
+        <SliderPrimitive.Range className="absolute h-full" />
       </SliderPrimitive.Track>
       {props?.defaultValue?.map((value) => (
         <SliderPrimitive.Thumb
           key={`thumb-${value}`}
-          className={`block h-20 rounded-lg disabled:pointer-events-none pointer-events-auto disabled:opacity-50 ${styling.thumb}`}
-        />
+          className={`block h-28 disabled:pointer-events-none pointer-events-auto disabled:opacity-50 ${styling.thumb}`}
+          style={{
+            width: `${adjustedWidth}px`,
+          }}
+        >
+          {isCurrent && (
+            <span className="block my-0 mx-auto w-1 h-full bg-purple-500"></span>
+          )}
+        </SliderPrimitive.Thumb>
       ))}
     </SliderPrimitive.Root>
   );

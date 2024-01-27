@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { convertSecondsToClock } from "@/lib/utils";
 
 type TranscriptItem = {
   time: {
@@ -13,44 +14,45 @@ type TranscriptItem = {
 export interface TranscriptProps {
   transcript: TranscriptItem[];
   removeTranscript: (item: number) => void;
-}
-
-function convertTime(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const formattedTime =
-    minutes.toString().padStart(2, "0") +
-    ":" +
-    seconds.toString().padStart(2, "0");
-  return formattedTime;
+  startEnd: number[];
 }
 
 export default function Transcript(props: TranscriptProps): JSX.Element {
-  const { transcript, removeTranscript } = props;
+  const { transcript, removeTranscript, startEnd } = props;
+
+  function renderItems() {
+    return transcript.map((item, key) => {
+      if (item.time.end >= startEnd[0] && item.time.end < startEnd[1]) {
+        return (
+          <CardContent key={item.time.start}>
+            <div className="flex items-center">
+              <span className="text-muted-foreground">
+                {convertSecondsToClock(item.time.start)} -{" "}
+                {convertSecondsToClock(item.time.end)}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="ml-1"
+                onClick={() => removeTranscript(key)}
+              >
+                ❌
+              </Button>
+            </div>
+            <p className="mt-2">{item.text}</p>
+          </CardContent>
+        );
+      }
+    });
+  }
+
   return (
     <Card className="max-h-[90vh] overflow-auto">
       <CardHeader>
         <Input id="search" placeholder="🔍 Search" />
       </CardHeader>
-      {transcript.map((item, key) => (
-        <CardContent key={item.time.start}>
-          <div className="flex items-center">
-            <span className="text-muted-foreground">
-              {convertTime(item.time.start)} - {convertTime(item.time.end)}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="ml-1"
-              onClick={() => removeTranscript(key)}
-            >
-              ❌
-            </Button>
-          </div>
-          <p className="mt-2">{item.text}</p>
-        </CardContent>
-      ))}
+      {renderItems()}
     </Card>
   );
 }

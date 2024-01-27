@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { type TranscriptProps } from "@/components/Transcript";
+import ActionBar from "@/components/ActionBar";
 
 const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/ogg"];
 const ACCEPTED_TRANSCRIPT_TYPES = ["application/json"];
@@ -29,6 +30,7 @@ export default function App() {
   });
   const [video, setVideo] = useState<File | undefined>();
   const [currentFrame, setCurrentFrame] = useState<number>(0);
+  const [startEnd, setStartEnd] = useState<number[]>([]);
   const [transcript, setTranscript] = useState<TranscriptProps>();
   const ffmpegRef = useRef(new FFmpeg());
 
@@ -82,6 +84,7 @@ export default function App() {
 
     setFrameSize((await dimensions) as FrameSize);
     setFrames(frames);
+    setStartEnd([0, frames.length - 1]);
   };
 
   function onSubmitVideo(e: FormEvent<HTMLFormElement>) {
@@ -142,7 +145,7 @@ export default function App() {
     load();
   }, []);
 
-  console.log(transcript);
+  console.log(startEnd);
   return (
     <>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -202,11 +205,13 @@ export default function App() {
                   src={frames[currentFrame]}
                   className="max-h-screen w-auto"
                 />
-                <div className="flex gap-1 overflow-auto relative w-full float-left">
+                <ActionBar startEnd={startEnd} currentFrame={currentFrame} />
+                <div className="flex overflow-auto relative w-full float-left">
                   <Timeline
                     framesCount={frames.length}
                     frameSize={frameSize}
                     setCurrentFrame={setCurrentFrame}
+                    setStartEnd={setStartEnd}
                   />
                   {frames.map((frame, index) => (
                     <img
@@ -215,7 +220,10 @@ export default function App() {
                       src={frame}
                       loading="lazy"
                       draggable={false}
-                      className="h-20 w-auto"
+                      className={`h-28 w-auto transition ${
+                        (startEnd[0] > index && "blur-sm grayscale") ||
+                        (startEnd[1] < index && "blur-sm grayscale")
+                      }`}
                     />
                   ))}
                 </div>
@@ -227,6 +235,7 @@ export default function App() {
               <SidePanel
                 transcript={transcript}
                 removeTranscript={removeTranscript}
+                startEnd={startEnd}
               />
             )}
           </div>
