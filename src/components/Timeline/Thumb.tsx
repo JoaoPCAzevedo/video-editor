@@ -18,7 +18,6 @@ const Thumb = React.forwardRef<
 
   return (
     <SliderPrimitive.Root
-      minStepsBetweenThumbs={1}
       ref={ref}
       className={cn(
         "relative flex w-full touch-none select-none items-center h-full pointer-events-none",
