@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { type TranscriptProps } from "@/components/Transcript";
-import ActionBar from "@/components/ActionBar";
+import ActionBar, { WatermarkPositions } from "@/components/ActionBar";
 import { convertSecondsToClock } from "@/lib/utils";
 
 const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/ogg"];
@@ -22,6 +22,7 @@ const ACCEPTED_TRANSCRIPT_TYPES = ["application/json"];
 const maxFileSize = 1024 * 1024 * 1024; // 1gb
 
 export default function App() {
+  const [isExporting, setIsExporting] = useState<boolean>(false);
   const [uploadModalOpen, setUploadModalOpen] = useState<boolean>(true);
   const [ffmpegLoaded, setFfmpegLoaded] = useState<boolean>(false);
   const [frames, setFrames] = useState<string[]>([]);
@@ -30,6 +31,9 @@ export default function App() {
     height: 0,
   });
   const [video, setVideo] = useState<File | undefined>();
+  const [watermark, setWatermark] = useState<File | undefined>();
+  const [watermarkPosition, setWatermarkPosition] =
+    useState<WatermarkPositions | null>();
   const [currentFrame, setCurrentFrame] = useState<number>(0);
   const [startEnd, setStartEnd] = useState<number[]>([]);
   const [transcript, setTranscript] = useState<TranscriptProps>();
@@ -88,18 +92,25 @@ export default function App() {
     setStartEnd([0, frames.length - 1]);
   };
 
-  const trimVideo = async () => {
+  const editVideo = async () => {
+    setIsExporting(true);
     const ffmpeg = ffmpegRef.current;
     await ffmpeg.writeFile("input.mp4", await fetchFile(video));
+    // Add watermark if exists
+    watermark &&
+      (await ffmpeg.writeFile("image.png", await fetchFile(watermark)));
+    const watermarkInfo = watermark
+      ? ["-i", "image.png", "-filter_complex", getWaterMarkPosition("ffmpeg")]
+      : "";
+    // Execute video editing commands
     await ffmpeg.exec([
       "-i",
       "input.mp4",
+      ...watermarkInfo,
       "-ss",
       convertSecondsToClock(startEnd[0]),
       "-to",
       convertSecondsToClock(startEnd[1] + 1),
-      "-c",
-      "copy",
       "output.mp4",
     ]);
     // Read the data of the output file and create a blob URL
@@ -107,12 +118,13 @@ export default function App() {
     const trimmedVideoUrl = URL.createObjectURL(
       new Blob([data.buffer], { type: "video/mp4" })
     );
+    setIsExporting(false);
     return trimmedVideoUrl;
   };
 
   const exportVideo = async () => {
     // Call the trimVideo function and get the URL
-    const url = await trimVideo();
+    const url = await editVideo();
     // Create an anchor element and set the href and download attributes
     const a = document.createElement("a");
     a.href = url;
@@ -123,6 +135,40 @@ export default function App() {
     // Remove the anchor from the document
     document.body.removeChild(a);
   };
+
+  function getWaterMarkPosition(type: "css" | "ffmpeg") {
+    const watermarkPositionValues = {
+      "top-left": {
+        css: "top-0 left-0",
+        ffmpeg: "overlay=x=0:y=0",
+      },
+      "top-right": {
+        css: "top-0 right-0",
+        ffmpeg: "overlay=x=W-w:y=0",
+      },
+      "bottom-left": {
+        css: "bottom-0 left-0",
+        ffmpeg: "overlay=x=0:y=H-h",
+      },
+      "bottom-right": {
+        css: "bottom-0 right-0",
+        ffmpeg: "overlay=x=W-w:y=H-h",
+      },
+    };
+
+    switch (watermarkPosition) {
+      case "top-left":
+        return watermarkPositionValues["top-left"][type];
+      case "top-right":
+        return watermarkPositionValues["top-right"][type];
+      case "bottom-left":
+        return watermarkPositionValues["bottom-left"][type];
+      case "bottom-right":
+        return watermarkPositionValues["bottom-right"][type];
+      default:
+        return "";
+    }
+  }
 
   function onSubmitVideo(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -137,6 +183,13 @@ export default function App() {
     }
   }
 
+  function handleWatermarkChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const watermark = e.target.files?.[0];
+    if (watermark) {
+      setWatermark(watermark);
+    }
+  }
+
   function handleTranscriptChange(e: React.ChangeEvent<HTMLInputElement>) {
     const transcript = e.target.files?.[0];
     if (transcript) {
@@ -148,6 +201,13 @@ export default function App() {
         setTranscript(transcriptJSON);
       };
     }
+  }
+
+  function handleWaterMarkPositionChange(position: WatermarkPositions) {
+    if (position === "none") {
+      setWatermark(undefined);
+    }
+    setWatermarkPosition(position);
   }
 
   function removeTranscript(item: number) {
@@ -232,19 +292,33 @@ export default function App() {
           <div
             className={`${
               frames.length === 0 && "animate-pulse bg-muted"
-            } h-fit min-h-96 w-8/12 rounded-lg border flex flex-wrap justify-center`}
+            } h-fit min-h-96 w-8/12 rounded-lg border flex flex-wrap justify-center relative`}
           >
             {frames.length > 0 && (
               <>
-                <img
-                  alt={`frame-${currentFrame}`}
-                  src={frames[currentFrame]}
-                  className="max-h-screen w-auto"
-                />
+                <div className="relative">
+                  {watermark && (
+                    <div className={`absolute ${getWaterMarkPosition("css")}`}>
+                      <img
+                        src={URL.createObjectURL(watermark)}
+                        alt="Watermark"
+                      />
+                    </div>
+                  )}
+                  <img
+                    alt={`frame-${currentFrame}`}
+                    src={frames[currentFrame]}
+                    className="max-h-screen w-auto"
+                  />
+                </div>
                 <ActionBar
                   startEnd={startEnd}
                   currentFrame={currentFrame}
                   exportVideo={exportVideo}
+                  handleWatermarkChange={handleWatermarkChange}
+                  handleWaterMarkPositionChange={handleWaterMarkPositionChange}
+                  watermark={watermark}
+                  isExporting={isExporting}
                 />
                 <div className="flex overflow-auto relative w-full float-left">
                   <Timeline

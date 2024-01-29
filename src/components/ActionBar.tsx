@@ -1,17 +1,38 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { convertSecondsToClock } from "@/lib/utils";
+import { useRef } from "react";
+
+export type WatermarkPositions =
+  | "none"
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right";
 
 interface ActionBarProps {
   startEnd: number[];
   currentFrame: number;
   exportVideo: () => void;
+  handleWatermarkChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleWaterMarkPositionChange: (position: WatermarkPositions) => void;
+  watermark: File | undefined;
+  isExporting: boolean;
 }
 
 export default function ActionBar(props: ActionBarProps): JSX.Element {
-  const { startEnd, currentFrame, exportVideo } = props;
+  const inputLogoRef = useRef<HTMLInputElement>(null);
+  const {
+    startEnd,
+    currentFrame,
+    exportVideo,
+    handleWatermarkChange,
+    handleWaterMarkPositionChange,
+    watermark,
+    isExporting,
+  } = props;
   return (
-    <div className="bg-muted rounded-md w-full p-4 gap-4 flex content-between">
+    <div className="bg-muted rounded-md w-full p-4 gap-4 flex content-between items-center">
       <div className="border border-primary rounded-full h-fit flex items-center">
         <p className="text-xs font-semibold px-2.5">Start</p>
         <Badge>{convertSecondsToClock(startEnd[0])}</Badge>
@@ -24,18 +45,73 @@ export default function ActionBar(props: ActionBarProps): JSX.Element {
         <p className="text-xs font-semibold px-2.5">Current</p>
         <Badge>{convertSecondsToClock(currentFrame)}</Badge>
       </div>
-      <Button className="text-xs font-semibold px-2.5 py-0.5 h-auto">
-        Add logo
-      </Button>
-      <Button className="text-xs font-semibold px-2.5 py-0.5 h-auto">
+      <form onSubmit={(e) => e.preventDefault()}>
+        <select
+          title="logoPosition"
+          id="logoPosition"
+          className="text-xs font-semibold rounded-md text-primary-foreground px-2.5 py-1 border-r-8 border-transparent"
+          onChange={(e) => {
+            if (inputLogoRef.current) {
+              if (!watermark) {
+                inputLogoRef.current?.click();
+              }
+            }
+            handleWaterMarkPositionChange(e.target.value as WatermarkPositions);
+          }}
+        >
+          <option value="none">
+            {!watermark ? "Add logo" : "Remove logo"}
+          </option>
+          <option value="top-left">Top left</option>
+          <option value="top-right">Top right</option>
+          <option value="bottom-left">Bottom left</option>
+          <option value="bottom-right">Bottom right</option>
+        </select>
+        {!watermark && (
+          <input
+            type="file"
+            name="logo"
+            id="logo"
+            hidden
+            accept={".png"}
+            ref={inputLogoRef}
+            onChange={(e) => handleWatermarkChange(e)}
+          />
+        )}
+      </form>
+      <Button className="text-xs font-semibold px-2.5 py-1 h-auto">
         Add intro
       </Button>
-      <Button
-        className="text-xs font-semibold px-2.5 py-0.5 h-auto"
-        onClick={exportVideo}
-      >
-        Export
-      </Button>
+      {!isExporting ? (
+        <Button
+          className="text-xs font-semibold px-2.5 py-1 h-auto"
+          onClick={exportVideo}
+        >
+          Export
+        </Button>
+      ) : (
+        <Button className="text-xs font-semibold px-2.5 py-1 h-auto" disabled>
+          <svg
+            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25 stroke-primary-foreground"
+              cx="12"
+              cy="12"
+              r="10"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75 fill-primary-foreground"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          Exporting...
+        </Button>
+      )}
     </div>
   );
 }
