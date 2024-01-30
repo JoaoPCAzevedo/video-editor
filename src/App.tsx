@@ -31,6 +31,7 @@ export default function App() {
     height: 0,
   });
   const [video, setVideo] = useState<File | undefined>();
+  const [intro, setIntro] = useState<File | undefined>();
   const [watermark, setWatermark] = useState<File | undefined>();
   const [watermarkPosition, setWatermarkPosition] =
     useState<WatermarkPositions | null>();
@@ -102,6 +103,8 @@ export default function App() {
     const watermarkInfo = watermark
       ? ["-i", "image.png", "-filter_complex", getWaterMarkPosition("ffmpeg")]
       : "";
+    // Add intro if exists
+    intro && (await ffmpeg.writeFile("intro.mp4", await fetchFile(intro)));
     // Execute video editing commands
     await ffmpeg.exec([
       "-i",
@@ -180,6 +183,15 @@ export default function App() {
     const video = e.target.files?.[0];
     if (video) {
       setVideo(video);
+    }
+  }
+
+  function handleIntroChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const intro = e?.target?.files?.[0];
+    if (intro) {
+      setIntro(intro);
+    } else {
+      setIntro(undefined);
     }
   }
 
@@ -319,6 +331,8 @@ export default function App() {
                   handleWaterMarkPositionChange={handleWaterMarkPositionChange}
                   watermark={watermark}
                   isExporting={isExporting}
+                  handleIntroChange={handleIntroChange}
+                  intro={intro}
                 />
                 <div className="flex overflow-auto relative w-full float-left">
                   <Timeline

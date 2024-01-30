@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { convertSecondsToClock } from "@/lib/utils";
 import { useRef } from "react";
 
+const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/ogg"];
+
 export type WatermarkPositions =
   | "none"
   | "top-left"
@@ -18,10 +20,15 @@ interface ActionBarProps {
   handleWaterMarkPositionChange: (position: WatermarkPositions) => void;
   watermark: File | undefined;
   isExporting: boolean;
+  handleIntroChange: (
+    e: React.ChangeEvent<HTMLInputElement> | undefined
+  ) => void;
+  intro: File | undefined;
 }
 
 export default function ActionBar(props: ActionBarProps): JSX.Element {
   const inputLogoRef = useRef<HTMLInputElement>(null);
+  const inputIntroRef = useRef<HTMLInputElement>(null);
   const {
     startEnd,
     currentFrame,
@@ -30,6 +37,8 @@ export default function ActionBar(props: ActionBarProps): JSX.Element {
     handleWaterMarkPositionChange,
     watermark,
     isExporting,
+    handleIntroChange,
+    intro,
   } = props;
   return (
     <div className="bg-muted rounded-md w-full p-4 gap-4 flex content-between items-center">
@@ -79,9 +88,33 @@ export default function ActionBar(props: ActionBarProps): JSX.Element {
           />
         )}
       </form>
-      <Button className="text-xs font-semibold px-2.5 py-1 h-auto">
+      <Button
+        className="text-xs font-semibold px-2.5 py-1 h-auto"
+        onClick={() => inputIntroRef?.current?.click()}
+      >
         Add intro
       </Button>
+      {!intro ? (
+        <input
+          type="file"
+          name="intro"
+          id="intro"
+          hidden
+          accept={ACCEPTED_VIDEO_TYPES.join(",")}
+          ref={inputIntroRef}
+          onChange={(e) => handleIntroChange(e)}
+        />
+      ) : (
+        <div className="border border-primary rounded-full h-fit flex items-center">
+          <p className="text-xs font-semibold px-2.5">{intro.name}</p>
+          <Badge
+            className="cursor-pointer"
+            onClick={() => handleIntroChange(undefined)}
+          >
+            ❌
+          </Badge>
+        </div>
+      )}
       {!isExporting ? (
         <Button
           className="text-xs font-semibold px-2.5 py-1 h-auto"
