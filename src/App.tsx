@@ -11,8 +11,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@/components/Dialog";
+import { Button } from "@/components/Button";
 import { type TranscriptProps } from "@/components/Transcript";
 import ActionBar, { WatermarkPositions } from "@/components/ActionBar";
 import { convertSecondsToClock } from "@/lib/utils";

@@ -1,11 +1,11 @@
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/Tabs";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
+} from "@/components/Card";
 import Transcript, { type TranscriptProps } from "@/components/Transcript";
 
 interface SidePanelProps {

@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/Button";
+import { Badge } from "@/components/Badge";
 import { convertSecondsToClock } from "@/lib/utils";
 import { useRef } from "react";
 
