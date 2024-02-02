@@ -52,6 +52,10 @@ export default function App() {
         `${baseURL}/ffmpeg-core.wasm`,
         "application/wasm"
       ),
+      workerURL: await toBlobURL(
+        `${baseURL}/ffmpeg-core.worker.js`,
+        "text/javascript"
+      ),
     });
     setFfmpegLoaded(true);
   };
@@ -95,34 +99,128 @@ export default function App() {
 
   const editVideo = async () => {
     setIsExporting(true);
-    const ffmpeg = ffmpegRef.current;
-    await ffmpeg.writeFile("input.mp4", await fetchFile(video));
-    // Add watermark if exists
-    watermark &&
-      (await ffmpeg.writeFile("image.png", await fetchFile(watermark)));
-    const watermarkInfo = watermark
-      ? ["-i", "image.png", "-filter_complex", getWaterMarkPosition("ffmpeg")]
-      : "";
-    // Add intro if exists
-    intro && (await ffmpeg.writeFile("intro.mp4", await fetchFile(intro)));
-    // Execute video editing commands
-    await ffmpeg.exec([
-      "-i",
-      "input.mp4",
-      ...watermarkInfo,
-      "-ss",
-      convertSecondsToClock(startEnd[0]),
-      "-to",
-      convertSecondsToClock(startEnd[1] + 1),
-      "output.mp4",
-    ]);
-    // Read the data of the output file and create a blob URL
-    const data = (await ffmpeg.readFile("output.mp4")) as Uint8Array;
-    const trimmedVideoUrl = URL.createObjectURL(
-      new Blob([data.buffer], { type: "video/mp4" })
-    );
-    setIsExporting(false);
-    return trimmedVideoUrl;
+    try {
+      const ffmpeg = ffmpegRef.current;
+      /**
+       * Handle main video
+       */
+      const mainVideo = "main.mp4";
+      await ffmpeg.writeFile(mainVideo, await fetchFile(video));
+      const mainVideoInfo = ["-i", mainVideo];
+      /**
+       * Handle intro video
+       */
+      let introInfo: string | string[] = "";
+      if (intro) {
+        const introVideo = "intro.mp4";
+        await ffmpeg.writeFile(introVideo, await fetchFile(intro));
+        introInfo = ["-i", introVideo];
+        const introComand = [
+          "-filter_complex",
+          `[0:v]scale=360x640,setsar=1[v0]; \
+        [1:v]scale=360x640,setsar=1[v1]; \
+        [v1][1:a][v0][0:a] concat=n=2:v=1:a=1 [v] [a]; \
+        [v] [2:v] ${getWaterMarkPosition("ffmpeg")} [outv]`,
+          "-map",
+          "[outv]",
+          "-map",
+          "[a]",
+          "-vsync",
+          "2",
+        ];
+      }
+      /**
+       * Handle watermark image
+       */
+      let watermarkInfo: string | string[] = "";
+      if (watermark) {
+        const watermarkImage = "image.png";
+        await ffmpeg.writeFile(watermarkImage, await fetchFile(watermark));
+        watermarkInfo = ["-i", watermarkImage];
+      }
+      /**
+       * Build the command
+       */
+      const outputVideo = "output.mp4";
+      let command = [
+        "-ss",
+        convertSecondsToClock(startEnd[0]),
+        "-to",
+        convertSecondsToClock(startEnd[1] + 1),
+        ...mainVideoInfo,
+        outputVideo,
+      ];
+      if (intro) {
+        command = [
+          "-ss",
+          convertSecondsToClock(startEnd[0]),
+          "-to",
+          convertSecondsToClock(startEnd[1] + 1),
+          ...mainVideoInfo,
+          ...introInfo,
+          "-filter_complex",
+          "[0:v]scale=360x640,setsar=1[v0]; \
+        [1:v]scale=360x640,setsar=1[v1]; \
+        [v1][1:a][v0][0:a] concat=n=2:v=1:a=1 [v] [a]",
+          "-map",
+          "[v]",
+          "-map",
+          "[a]",
+          "-vsync",
+          "2",
+          outputVideo,
+        ];
+        if (watermark) {
+          command = [
+            "-ss",
+            convertSecondsToClock(startEnd[0]),
+            "-to",
+            convertSecondsToClock(startEnd[1] + 1),
+            ...mainVideoInfo,
+            ...introInfo,
+            ...watermarkInfo,
+            "-filter_complex",
+            `[0:v]scale=360x640,setsar=1[v0]; \
+            [1:v]scale=360x640,setsar=1[v1]; \
+            [v1][1:a][v0][0:a] concat=n=2:v=1:a=1 [v] [a]; \
+            [v] [2:v] ${getWaterMarkPosition("ffmpeg")} [outv]`,
+            "-map",
+            "[outv]",
+            "-map",
+            "[a]",
+            "-vsync",
+            "2",
+            outputVideo,
+          ];
+        }
+      } else if (watermark && !intro) {
+        command = [
+          "-ss",
+          convertSecondsToClock(startEnd[0]),
+          "-to",
+          convertSecondsToClock(startEnd[1] + 1),
+          ...mainVideoInfo,
+          ...watermarkInfo,
+          "-filter_complex",
+          getWaterMarkPosition("ffmpeg"),
+          outputVideo,
+        ];
+      }
+      /**
+       * Execute video editing commands
+       */
+      await ffmpeg.exec(command);
+      // Read the data of the output file and create a blob URL
+      const data = (await ffmpeg.readFile(outputVideo)) as Uint8Array;
+      const editedVideo = URL.createObjectURL(
+        new Blob([data.buffer], { type: "video/mp4" })
+      );
+      setIsExporting(false);
+      return editedVideo;
+    } catch (error) {
+      console.error(error);
+      setIsExporting(false);
+    }
   };
 
   const exportVideo = async () => {
@@ -187,9 +285,9 @@ export default function App() {
   }
 
   function handleIntroChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const intro = e?.target?.files?.[0];
-    if (intro) {
-      setIntro(intro);
+    const newIntro = e?.target?.files?.[0];
+    if (newIntro) {
+      setIntro(newIntro);
     } else {
       setIntro(undefined);
     }
