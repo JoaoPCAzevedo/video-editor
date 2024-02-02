@@ -398,11 +398,11 @@ export default function App() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex p-8 gap-4">
+        <div className="lg:flex lg:p-8 p-2 gap-4">
           <div
             className={`${
               frames.length === 0 && "animate-pulse bg-muted"
-            } h-fit min-h-96 w-8/12 rounded-lg border flex flex-wrap justify-center relative`}
+            } h-fit min-h-96 w-full lg:w-8/12 rounded-lg border flex flex-wrap justify-center relative`}
           >
             {frames.length > 0 && (
               <>
@@ -456,7 +456,7 @@ export default function App() {
               </>
             )}
           </div>
-          <div id="right-panel" className="w-4/12">
+          <div id="right-panel" className="w-full mt-4 lg:m-0 lg:w-4/12">
             {transcript && (
               <SidePanel
                 transcript={transcript}

@@ -41,7 +41,7 @@ export default function ActionBar(props: ActionBarProps): JSX.Element {
     intro,
   } = props;
   return (
-    <div className="bg-muted rounded-md w-full p-4 gap-4 flex content-between items-center">
+    <div className="bg-muted rounded-md w-full p-4 gap-4 flex-wrap flex content-between items-center">
       <div className="border border-primary rounded-full h-fit flex items-center">
         <p className="text-xs font-semibold px-2.5">Start</p>
         <Badge>{convertSecondsToClock(startEnd[0])}</Badge>
